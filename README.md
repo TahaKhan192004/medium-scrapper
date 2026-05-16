@@ -33,7 +33,7 @@ Why a venv? Claude Desktop may launch a different `python` than the one you use 
 
 ## One-click install (PowerShell)
 
-If you want a single script that installs everything into a clean folder (but leaves Claude config changes to you), run:
+If you want a single script that installs everything into a clean folder (but leaves Claude config changes to you), run from a local checkout:
 
 ```powershell
 cd C:\Users\DELL\OneDrive\Desktop\medium-scrapper
@@ -41,6 +41,14 @@ cd C:\Users\DELL\OneDrive\Desktop\medium-scrapper
 ```
 
 Then use the printed `command` + `args` values in your Claude Desktop config.
+
+### One-click install from GitHub (clone)
+
+If you want the installer to clone the repo for you (requires Git installed):
+
+```powershell
+.\install.ps1 -InstallDir "$HOME\medium-scraper-mcp" -RepoUrl "https://github.com/TahaKhan192004/medium-scrapper.git"
+```
 
 ## Configure Claude Desktop
 

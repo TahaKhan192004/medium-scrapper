@@ -3,7 +3,12 @@ param(
   [string]$InstallDir = "$HOME\\medium-scraper-mcp",
 
   [Parameter(Mandatory = $false)]
-  [string]$PythonExe = "python"
+  [string]$PythonExe = "python",
+
+  # Optional: clone from GitHub instead of copying local files.
+  # Example: -RepoUrl "https://github.com/TahaKhan192004/medium-scrapper.git"
+  [Parameter(Mandatory = $false)]
+  [string]$RepoUrl = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,21 +22,35 @@ function Assert-Ok($what) {
 Write-Step "Installing Medium Scraper MCP server"
 Write-Host "Install dir: $InstallDir"
 Write-Host "Python:      $PythonExe"
+if ($RepoUrl) { Write-Host "Repo URL:    $RepoUrl" }
 
 if (-not (Test-Path $InstallDir)) {
   Write-Step "Creating install directory"
   New-Item -ItemType Directory -Path $InstallDir | Out-Null
 }
 
-Write-Step "Copying project files"
-$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not (Test-Path (Join-Path $repoRoot "requirements.txt"))) {
-  throw "requirements.txt not found next to install.ps1. Place install.ps1 in the project root and run it again."
-}
+if ($RepoUrl) {
+  Write-Step "Cloning repo into install directory"
+  if (Test-Path (Join-Path $InstallDir "requirements.txt")) {
+    Write-Warn "requirements.txt already exists in $InstallDir; skipping clone."
+  } else {
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+      throw "git is required to clone the repo. Install Git for Windows, or run this script from a local checkout without -RepoUrl."
+    }
+    & git clone $RepoUrl $InstallDir
+    Assert-Ok "git clone"
+  }
+} else {
+  Write-Step "Copying project files"
+  $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+  if (-not (Test-Path (Join-Path $repoRoot "requirements.txt"))) {
+    throw "requirements.txt not found next to install.ps1. Either run this script from the project root, or pass -RepoUrl to clone from GitHub."
+  }
 
-Get-ChildItem -Path $repoRoot -Force | ForEach-Object {
-  if ($_.Name -in @(".venv", "__pycache__", ".git")) { return }
-  Copy-Item -Recurse -Force -Path $_.FullName -Destination (Join-Path $InstallDir $_.Name)
+  Get-ChildItem -Path $repoRoot -Force | ForEach-Object {
+    if ($_.Name -in @(".venv", "__pycache__", ".git")) { return }
+    Copy-Item -Recurse -Force -Path $_.FullName -Destination (Join-Path $InstallDir $_.Name)
+  }
 }
 
 Push-Location $InstallDir
